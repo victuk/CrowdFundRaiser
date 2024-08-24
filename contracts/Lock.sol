@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 import "hardhat/console.sol";
 
@@ -9,6 +9,7 @@ contract Lock {
     constructor() {
         owner = msg.sender;
     }
+
 
 
     struct CroudFundingDetails {
@@ -51,14 +52,14 @@ contract Lock {
     }
 
     // Function to donate to a campaign
-    function donate(uint campaignID, uint amount) public {
+    function donate(uint campaignID) public payable {
         if(!checkIfCampaignExists(campaignID)) {
             revert("Account does not exist");
         } else if (block.timestamp > campaigns[campaignID].deadline) {
             revert("Can't donate. Donation date has passed");
         } else {
-            campaigns[campaignID].amountRaised = campaigns[campaignID].amountRaised + amount;
-            emit DonationReceived(msg.sender, amount, campaignID);
+            campaigns[campaignID].amountRaised = campaigns[campaignID].amountRaised + msg.value;
+            emit DonationReceived(msg.sender, msg.value, campaignID);
         }
     }
 
