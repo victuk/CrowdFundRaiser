@@ -34,7 +34,7 @@ contract CroudFunding {
         uint _campaignID,
         string memory _title,
         string memory _description,
-        address _benefactor,
+        address payable _benefactor,
         uint _goal,
         uint _deadline
     ) public {
