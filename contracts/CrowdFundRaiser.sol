@@ -14,7 +14,7 @@ contract CroudFunding {
     struct CroudFundingDetails {
         string title;
         string description;
-        address benefactor;
+        address payable benefactor;
         uint goal;
         uint deadline;
         uint amountRaised;
