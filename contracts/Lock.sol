@@ -4,29 +4,86 @@ pragma solidity ^0.8.24;
 import "hardhat/console.sol";
 
 contract Lock {
-    function areaOfATriangle(
-        uint base,
-        uint height
-    ) public pure returns (uint) {
-        return (base * height) / 2;
+    address owner;
+
+    constructor() {
+        owner = msg.sender;
     }
 
-    function areaOfASquare(uint lengthofOneSide) public pure returns (uint) {
-        return lengthofOneSide * lengthofOneSide;
+
+    struct CroudFundingDetails {
+        string title;
+        string description;
+        address payable benefactor;
+        uint goal;
+        uint deadline;
+        uint amountRaised;
     }
 
-    function areaOfARectangle(
-        uint length,
-        uint width
-    ) public pure returns (uint) {
-        return length * width;
+    mapping (uint croudFundingID => CroudFundingDetails) public campaigns;
+
+    event CampaignCreated(address indexed createdBy, uint indexed campaignID, string campaignTitle);
+    event DonationReceived(address indexed from, uint indexed amount, uint campaignID);
+    event CampaignEnded(address indexed from, address indexed to, uint amount);
+
+    // Function to check if the campaign already exists
+    function checkIfCampaignExists (uint campaignID) internal view returns (bool) {
+        return bytes(campaigns[campaignID].title).length > 0;
     }
 
-    function loopIt() public pure returns (uint) {
-        for(uint i = 1; i <= 10; i++) {
-            console.log(i);
+    // Function to create a campaign
+    function createCampaign(
+        uint _campaignID,
+        string memory _title,
+        string memory _description,
+        address payable _benefactor,
+        uint _goal,
+        uint _deadline
+    ) public {
+        if(checkIfCampaignExists(_campaignID)) {
+            revert("Campaign already exist");
         }
-        return 0;
+
+        campaigns[_campaignID] = CroudFundingDetails(_title, _description, _benefactor, _goal, _deadline, 0);
+
+        emit CampaignCreated(msg.sender, _campaignID, _title);
+
+    }
+
+    // Function to donate to a campaign
+    function donate(uint campaignID, uint amount) public {
+        if(!checkIfCampaignExists(campaignID)) {
+            revert("Account does not exist");
+        } else if (block.timestamp > campaigns[campaignID].deadline) {
+            revert("Can't donate. Donation date has passed");
+        } else {
+            campaigns[campaignID].amountRaised = campaigns[campaignID].amountRaised + amount;
+            emit DonationReceived(msg.sender, amount, campaignID);
+        }
+    }
+
+    // Function to end the campaign
+    function endCampaign(uint _campaignID) public {
+        if (block.timestamp < campaigns[_campaignID].deadline) {
+            revert("Campaign has not expired");
+        }
+
+        if(msg.sender != owner) {
+                revert("Unauthorized request: Only the smart contract owner can trigger this event");
+        }
+
+        (bool success, ) = campaigns[_campaignID].benefactor.call{value: campaigns[_campaignID].amountRaised}("");
+
+        if(success == false) {
+            revert("Funding the benefactor failed, please try again leter");
+        }
+
+        emit CampaignEnded(msg.sender, campaigns[_campaignID].benefactor, campaigns[_campaignID].amountRaised);
+    }
+
+    // This was for test, I wanted to see how I can convert the timestamp to a future date.
+    function getCurrentTimeStamp() public view returns (uint) {
+        return block.timestamp;
     }
 
 

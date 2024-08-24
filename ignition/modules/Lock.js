@@ -5,7 +5,7 @@ const ONE_GWEI = 1_000_000_000n;
 
 module.exports = buildModule("LockModule", (m) => {
   
-  const lock = m.contract("CroudFunding");
+  const lock = m.contract("Lock");
 
   return { lock };
 });
